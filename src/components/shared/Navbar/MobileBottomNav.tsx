@@ -2,11 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { MdHome, MdOutlineIcecream, MdInfoOutline, MdOutlineEmail } from 'react-icons/md';
+import { MdHome, MdOutlineIcecream, MdInfoOutline, MdOutlineEmail, MdShoppingBag } from 'react-icons/md';
 
 const navLinks = [
   { href: '/', label: 'Home', icon: MdHome },
   { href: '/products', label: 'Products', icon: MdOutlineIcecream },
+  { href: '/orders', label: 'Order', icon: MdShoppingBag },
   { href: '/about', label: 'About Us', icon: MdInfoOutline },
   { href: '/contact', label: 'Contact', icon: MdOutlineEmail },
 ];

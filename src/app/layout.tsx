@@ -1,6 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { CartProvider } from "@/context/CartContext";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,8 +28,6 @@ export const metadata: Metadata = {
     shortcut: '/logo.jpg',
     apple: '/logo.jpg', 
   },
-
-  themeColor: '#F01B4E', 
 
   keywords: ['ice cream', 'artisanal', 'premium', 'dessert', 'Guntur', 'Cream House', 'natural ingredients'],
 
@@ -59,6 +59,10 @@ export const metadata: Metadata = {
   robots: 'index, follow', 
 };
 
+export const viewport: Viewport = {
+  themeColor: '#F01B4E',
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -69,7 +73,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <CartProvider>
+          {children}
+          <Toaster position="top-center" richColors />
+        </CartProvider>
       </body>
     </html>
   );

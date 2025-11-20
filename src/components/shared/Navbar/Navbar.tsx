@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Logo } from "./logo";
 import { NavMenu } from "./nav-menu";
+import CartSheet from "../CartSheet";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -37,6 +38,9 @@ const Navbar = () => {
           <Logo />
         </Link>
         <NavMenu className="hidden md:block" />
+        <div className="ml-auto md:ml-0 text-white">
+            <CartSheet />
+        </div>
       </div>
     </nav>
   );

@@ -1,15 +1,25 @@
 /* eslint-disable react/no-unescaped-entities */
-import { productsData } from "@/components/modules/Products/ProductsCard";
+import { supabase } from "@/lib/supabaseClient";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { FaWhatsapp } from "react-icons/fa"; 
 import type { Metadata } from 'next'; 
 
+type ProductDetailPageProps = {
+  params: {
+    id: string; 
+  };
+};
 
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
   const { id } = params;
-  const product = productsData.find(p => p.id === id);
+  
+  const { data: product } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .single();
 
   if (!product) {
     return {
@@ -20,62 +30,61 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cream-house.vercel.app';
   
-  const imageUrl = `${siteUrl}${product.thumbnail}`;
+  const imageUrl = product.image_url || `${siteUrl}/logo.jpg`;
 
   return {
-    title: `${product.title} | Cream House`, 
-    description: product.description, 
+    title: `${product.name} | Cream House`, 
+    description: product.description || `Premium ${product.name} form Cream House`, 
     openGraph: {
-      title: product.title,
-      description: product.description,
+      title: product.name,
+      description: product.description || `Premium ${product.name} form Cream House`,
       url: `${siteUrl}/products/${product.id}`, 
       images: [
         {
           url: imageUrl, 
           width: 800,
           height: 800,
-          alt: product.title,
+          alt: product.name,
         },
       ],
       type: 'website',
     },
-
     twitter: {
       card: 'summary_large_image',
-      title: product.title,
-      description: product.description,
+      title: product.name,
+      description: product.description || `Premium ${product.name} form Cream House`,
       images: [imageUrl], 
     },
   };
 }
 
-type ProductDetailPageProps = {
-  params: {
-    id: string; 
-  };
-};
+export default async function ProductDetailPage({ params }: ProductDetailPageProps) {
+  
+  const { data: product, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', params.id)
+    .single();
 
-export default function ProductDetailPage({ params }: ProductDetailPageProps) {
-  const product = productsData.find(p => p.id === params.id);
-
-  if (!product) {
+  if (!product || error) {
     notFound(); 
   }
+
   const ownerWhatsappNumber = "+918121923831"; 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://cream-house.vercel.app';
+  
   const fullProductUrl = `${siteUrl}/products/${product.id}`;
+  
   const message = encodeURIComponent(fullProductUrl);
   
   const whatsappUrl = `https://wa.me/${ownerWhatsappNumber}?text=${message}`;
-
-
 
   return (
     <div className="bg-white">
       <div className="w-full relative bg-[#E8254E]">
         <section className="relative flex flex-col items-center justify-center text-center py-28 px-6 text-white">
           <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight max-w-5xl leading-tight">
-            {product.title}
+            {product.name}
           </h1>
           <p className="mt-4 text-lg text-white font-semibold italic">
             A premium artisanal delight
@@ -87,22 +96,34 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
           
           <div className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-xl border border-gray-100">
-            <Image
-              src={product.thumbnail}
-              alt={product.title}
-              fill
-              className="object-cover"
-            />
+            {product.image_url ? (
+              <Image
+                src={product.image_url}
+                alt={product.name}
+                fill
+                className="object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500">
+                No Image
+              </div>
+            )}
           </div>
-
           <div className="flex flex-col gap-6">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Flavor Details
-              </h2>
+              <div className="flex justify-between items-start">
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                  Flavor Details
+                </h2>
+                <span className="px-4 py-1 bg-pink-100 text-pink-600 rounded-full font-bold text-lg">
+                  ${product.price}
+                </span>
+              </div>
+              
               <p className="text-gray-700 text-lg leading-relaxed">
-                {product.description}
+                {product.description || "No description available for this product."}
               </p>
+              
               <p className="text-gray-700 text-lg leading-relaxed mt-4">
                 We craft this flavor using only the finest local dairy and
                 all-natural ingredients. It's churned in small batches to
@@ -116,7 +137,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
               </h3>
               <ul className="list-disc list-inside text-gray-600 space-y-1">
                 <li>Fresh Milk & Cream</li>
-                <li>Natural {product.title.split(' ')[0]} Extract</li>
+                <li>Natural {product.name.split(' ')[0]} Extract</li>
                 <li>Pure Cane Sugar</li>
                 <li>No Artificial Preservatives</li>
               </ul>
@@ -141,7 +162,9 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 }
 
 export async function generateStaticParams() {
-  return productsData.map((product) => ({
+  const { data: products } = await supabase.from('products').select('id');
+  
+  return products?.map((product) => ({
     id: product.id,
-  }));
+  })) || [];
 }
